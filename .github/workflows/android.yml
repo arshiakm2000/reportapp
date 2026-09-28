@@ -1,0 +1,60 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Without this the APK would call its own localhost origin and never reach the server.
+      - name: Check the API base URL is configured
+        env:
+          API_BASE: ${{ vars.API_BASE }}
+        run: |
+          if [ -z "$API_BASE" ]; then
+            echo "::error::Repository variable API_BASE is not set. Add your deployed Vercel URL under Settings > Secrets and variables > Actions > Variables."
+            exit 1
+          fi
+          echo "Building against $API_BASE"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm test
+
+      - name: Build web assets
+        env:
+          VITE_API_BASE: ${{ vars.API_BASE }}
+        run: npm run build
+
+      - name: Copy web assets into the Android project
+        run: npx cap sync android
+
+      # The runner image already ships Android SDK 36, which is what Capacitor 8 targets.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maintenance-log-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

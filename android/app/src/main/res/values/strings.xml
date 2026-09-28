@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Maintenance Log</string>
+    <string name="title_activity_main">Maintenance Log</string>
+    <string name="package_name">com.arshia.maintenancelog</string>
+    <string name="custom_url_scheme">com.arshia.maintenancelog</string>
+</resources>
