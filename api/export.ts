@@ -1,6 +1,6 @@
-import { authorize, corsHeaders, json, preflight, serverError } from './_lib/http'
-import { filterByRange, toCsv } from './_lib/records'
-import { readRecords } from './_lib/store'
+import { authorize, corsHeaders, json, preflight, serverError } from './_lib/http.ts'
+import { filterByRange, toCsv } from './_lib/records.ts'
+import { readRecords } from './_lib/store.ts'
 
 /** Excel needs a byte order mark to read UTF-8 CSV correctly. */
 const BOM = '\uFEFF'

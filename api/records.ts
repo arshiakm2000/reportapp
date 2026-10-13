@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
-import { authorize, json, preflight, serverError } from './_lib/http'
-import { type MaintenanceRecord, sortByNewest } from './_lib/records'
-import { mutateRecords, readRecords } from './_lib/store'
+import { authorize, json, preflight, serverError } from './_lib/http.ts'
+import { type MaintenanceRecord, sortByNewest } from './_lib/records.ts'
+import { mutateRecords, readRecords } from './_lib/store.ts'
 
 const MAX_BRANCH_LENGTH = 64
 const MAX_NOTE_LENGTH = 5000

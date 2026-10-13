@@ -1,8 +1,5 @@
 import { BlobPreconditionFailedError, get, put } from '@vercel/blob'
-// @vercel/blob loads undici itself. A direct import makes the deployed
-// function include that package instead of crashing on startup.
-import { fetch as undiciFetch } from 'undici'
-import { type MaintenanceRecord, parseCsv, toCsv } from './records'
+import { type MaintenanceRecord, parseCsv, toCsv } from './records.ts'
 
 const BLOB_PATH = 'records.csv'
 const MAX_WRITE_ATTEMPTS = 4
@@ -14,10 +11,6 @@ interface Snapshot {
 }
 
 async function readSnapshot(): Promise<Snapshot> {
-  if (typeof undiciFetch !== 'function') {
-    throw new Error('The HTTP client failed to load.')
-  }
-
   // useCache: false so a read that immediately follows a write sees the new version.
   const result = await get(BLOB_PATH, { access: 'private', useCache: false })
   if (!result?.stream) return { records: [] }
