@@ -10,6 +10,10 @@ class NotFoundError extends Error {}
 
 type Parsed<T> = { ok: true; value: T } | { ok: false; error: string }
 
+function isFailure<T>(parsed: Parsed<T>): parsed is { ok: false; error: string } {
+  return !parsed.ok
+}
+
 interface RecordFields {
   branch: string
   work_done: string
@@ -46,17 +50,17 @@ function parseFields(body: unknown): Parsed<RecordFields> {
   const input = body as Record<string, unknown>
 
   const branch = readText(input.branch, 'branch', MAX_BRANCH_LENGTH)
-  if (!branch.ok) return branch
+  if (isFailure(branch)) return branch
   if (!branch.value) return { ok: false, error: 'branch is required.' }
 
   const workDone = readText(input.work_done, 'work_done', MAX_NOTE_LENGTH)
-  if (!workDone.ok) return workDone
+  if (isFailure(workDone)) return workDone
 
   const partsUsed = readText(input.parts_used, 'parts_used', MAX_NOTE_LENGTH)
-  if (!partsUsed.ok) return partsUsed
+  if (isFailure(partsUsed)) return partsUsed
 
   const timestamp = readTimestamp(input.timestamp)
-  if (!timestamp.ok) return timestamp
+  if (isFailure(timestamp)) return timestamp
 
   return {
     ok: true,
@@ -83,7 +87,7 @@ async function handleList(request: Request): Promise<Response> {
 
 async function handleCreate(request: Request): Promise<Response> {
   const fields = parseFields(await readJson(request))
-  if (!fields.ok) return json(request, { error: fields.error }, 400)
+  if (isFailure(fields)) return json(request, { error: fields.error }, 400)
 
   const now = new Date().toISOString()
   const record: MaintenanceRecord = {
@@ -99,7 +103,7 @@ async function handleCreate(request: Request): Promise<Response> {
 
 async function handleUpdate(request: Request, id: string): Promise<Response> {
   const fields = parseFields(await readJson(request))
-  if (!fields.ok) return json(request, { error: fields.error }, 400)
+  if (isFailure(fields)) return json(request, { error: fields.error }, 400)
 
   const record = await mutateRecords((records) => {
     const index = records.findIndex((candidate) => candidate.id === id)
