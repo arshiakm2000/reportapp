@@ -1,4 +1,4 @@
-import { BlobPreconditionFailedError, get, put } from '@vercel/blob'
+import { BlobNotFoundError, BlobPreconditionFailedError, get, head, put } from '@vercel/blob'
 import { type MaintenanceRecord, parseCsv, toCsv } from './records.ts'
 
 const BLOB_PATH = 'records.csv'
@@ -33,7 +33,18 @@ async function readSnapshot(): Promise<Snapshot> {
   if (!result?.stream) return { records: [] }
 
   const text = await new Response(result.stream).text()
-  return { records: parseCsv(text), etag: result.blob.etag }
+  // The download response carries a weak HTTP validator (W/"…"). ifMatch compares
+  // the store's etag from the Blob API, so a weak tag never matches.
+  let etag: string | undefined
+  try {
+    etag = (await head(BLOB_PATH)).etag
+  } catch (error) {
+    if (!(error instanceof BlobNotFoundError)) throw error
+  }
+  // #region agent log
+  fetch('http://127.0.0.1:7271/ingest/bac3925b-30c1-47d9-921d-95ac9e4260ae',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'e51152'},body:JSON.stringify({sessionId:'e51152',runId:'post-fix',hypothesisId:'A',location:'api/_lib/store.ts:readSnapshot',message:'store etag chosen',data:{download:etagShape(result.blob.etag),store:etagShape(etag)},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
+  return { records: parseCsv(text), etag }
 }
 
 export async function readRecords(): Promise<MaintenanceRecord[]> {
