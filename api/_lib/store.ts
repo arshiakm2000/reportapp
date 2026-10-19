@@ -53,9 +53,11 @@ export async function mutateRecords<T>(
   mutate: (records: MaintenanceRecord[]) => Mutation<T>,
 ): Promise<T> {
   let lastError: unknown
+  let lastShape = etagShape(undefined)
 
   for (let attempt = 0; attempt < MAX_WRITE_ATTEMPTS; attempt++) {
     const snapshot = await readSnapshot()
+    lastShape = etagShape(snapshot.etag)
     const { records, result } = mutate(snapshot.records)
 
     try {
@@ -81,5 +83,11 @@ export async function mutateRecords<T>(
     }
   }
 
-  throw lastError
+  const detail = `etag present=${lastShape.present} length=${lastShape.length} quoted=${lastShape.quoted} weak=${lastShape.weak}`
+  // #region agent log
+  console.error('blob write gave up', detail)
+  fetch('http://127.0.0.1:7271/ingest/bac3925b-30c1-47d9-921d-95ac9e4260ae',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'e51152'},body:JSON.stringify({sessionId:'e51152',runId:'pre-fix',hypothesisId:'A-C',location:'api/_lib/store.ts:mutateRecords',message:'blob write gave up',data:{detail},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
+  const message = lastError instanceof Error ? lastError.message : 'Write failed'
+  throw new Error(`${message} [${detail}]`)
 }
