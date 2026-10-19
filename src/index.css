@@ -1,34 +1,20 @@
 :root {
-  --bg: #f4f6f8;
+  --bg: #fff8f4;
   --surface: #ffffff;
-  --border: #dde2e8;
-  --text: #17212b;
-  --muted: #66727f;
-  --accent: #1f6feb;
+  --border: #eadfd6;
+  --text: #1a120e;
+  --muted: #6b5348;
+  --accent: #c8102e;
   --accent-text: #ffffff;
-  --danger: #c0392b;
-  --danger-bg: #fdecea;
+  --danger: #8e1b2c;
+  --danger-bg: #fde8ea;
   --radius: 12px;
 
-  color-scheme: light dark;
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: light;
+  font-family: Outfit, system-ui, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #12161b;
-    --surface: #1b2129;
-    --border: #2c343e;
-    --text: #e8edf2;
-    --muted: #9aa7b4;
-    --accent: #4c8dff;
-    --accent-text: #0b1016;
-    --danger: #ff7b6b;
-    --danger-bg: #3a1f1c;
-  }
 }
 
 * {
@@ -68,6 +54,8 @@ body {
 h1 {
   font-size: 24px;
   margin: 0;
+  padding-bottom: 4px;
+  border-bottom: 3px solid var(--accent);
 }
 
 h2 {
@@ -135,8 +123,8 @@ button {
   font-size: 15px;
   font-weight: 600;
   min-height: 44px;
-  padding: 0 16px;
-  border-radius: 10px;
+  padding: 0 18px;
+  border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
