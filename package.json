@@ -18,7 +18,8 @@
     "@vercel/blob": "^2.8.0",
     "papaparse": "^5.7.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "vercel": "^64.5.0"
   },
   "devDependencies": {
     "@capacitor/android": "^8.5.2",

@@ -10,9 +10,26 @@ interface Snapshot {
   etag?: string
 }
 
+function etagShape(etag: string | undefined): {
+  present: boolean
+  length: number
+  quoted: boolean
+  weak: boolean
+} {
+  return {
+    present: Boolean(etag),
+    length: etag?.length ?? 0,
+    quoted: etag?.startsWith('"') ?? false,
+    weak: etag?.startsWith('W/') ?? false,
+  }
+}
+
 async function readSnapshot(): Promise<Snapshot> {
   // useCache: false so a read that immediately follows a write sees the new version.
   const result = await get(BLOB_PATH, { access: 'private', useCache: false })
+  // #region agent log
+  fetch('http://127.0.0.1:7271/ingest/bac3925b-30c1-47d9-921d-95ac9e4260ae',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'e51152'},body:JSON.stringify({sessionId:'e51152',runId:'pre-fix',hypothesisId:'A-C-E',location:'api/_lib/store.ts:readSnapshot',message:'blob read',data:{statusCode:result && 'statusCode' in result ? result.statusCode : null,hasStream:Boolean(result?.stream),etag:etagShape(result?.blob?.etag)},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   if (!result?.stream) return { records: [] }
 
   const text = await new Response(result.stream).text()
@@ -42,14 +59,23 @@ export async function mutateRecords<T>(
     const { records, result } = mutate(snapshot.records)
 
     try {
+      // #region agent log
+      fetch('http://127.0.0.1:7271/ingest/bac3925b-30c1-47d9-921d-95ac9e4260ae',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'e51152'},body:JSON.stringify({sessionId:'e51152',runId:'pre-fix',hypothesisId:'A-D',location:'api/_lib/store.ts:mutateRecords',message:'blob write attempt',data:{attempt,recordCount:records.length,sendsIfMatch:Boolean(snapshot.etag),etag:etagShape(snapshot.etag)},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       await put(BLOB_PATH, toCsv(records), {
         access: 'private',
         contentType: 'text/csv',
         allowOverwrite: true,
         ...(snapshot.etag ? { ifMatch: snapshot.etag } : {}),
       })
+      // #region agent log
+      fetch('http://127.0.0.1:7271/ingest/bac3925b-30c1-47d9-921d-95ac9e4260ae',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'e51152'},body:JSON.stringify({sessionId:'e51152',runId:'pre-fix',hypothesisId:'C',location:'api/_lib/store.ts:mutateRecords',message:'blob write succeeded',data:{attempt},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       return result
     } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7271/ingest/bac3925b-30c1-47d9-921d-95ac9e4260ae',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'e51152'},body:JSON.stringify({sessionId:'e51152',runId:'pre-fix',hypothesisId:'B',location:'api/_lib/store.ts:mutateRecords',message:'blob write failed',data:{attempt,isPrecondition:error instanceof BlobPreconditionFailedError,errorName:error instanceof Error ? error.name : typeof error},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       if (!(error instanceof BlobPreconditionFailedError)) throw error
       lastError = error
     }
